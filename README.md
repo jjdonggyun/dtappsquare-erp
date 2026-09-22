@@ -53,6 +53,14 @@ Phase 1~6의 운영 기능을 구현했습니다. 인증·인사·조직·RBAC, 
 
 Git, Node.js 22.x(22.12 이상), npm, Docker Desktop이 필요합니다. Docker Desktop은 Linux container engine을 실행한 상태여야 합니다. 이 프로젝트의 로컬 Supabase는 다른 프로젝트와 분리된 55320~55324 포트를 사용하므로 해당 포트가 비어 있어야 합니다.
 
+### Docker/Supabase 환경 이전 방식
+
+Docker container나 volume을 PC 사이에서 직접 복사하지 않습니다. 저장소에 커밋된 `supabase/config.toml`, `supabase/migrations/*`, `supabase/seed.sql`과 `package-lock.json`을 기준으로 새 PC에서 환경을 다시 만듭니다. `npx supabase start`의 최초 실행은 필요한 Docker image를 내려받고 container와 local volume을 생성한 뒤 migration과 SQL seed를 적용합니다. 이어서 `npm run seed:local`이 개발용 Auth 계정과 애플리케이션 초기 데이터를 준비합니다.
+
+따라서 새 PC에는 같은 schema와 재현 가능한 기본 데이터가 만들어지지만, 기존 PC에서 임시로 입력한 로컬 DB 데이터·업로드 파일·Mailpit 메일은 자동으로 옮겨지지 않습니다. 공유해야 할 개발 데이터는 개인정보와 비밀값을 제거한 seed로 관리합니다. 실제 로컬 데이터 이전이 꼭 필요하면 Git에 넣지 말고 별도 암호화 백업으로 취급해야 하며, Supabase 관리 schema(Auth·Storage 등)는 일반 data dump만으로 완전히 복제되지 않습니다.
+
+`supabase/.temp`, Docker volume, `.env.local`은 PC별 상태이므로 복사하거나 커밋하지 않습니다. Docker Desktop에는 Supabase local stack이 사용할 수 있도록 메모리를 최소 7GB 이상 할당하는 것을 권장합니다.
+
 ```powershell
 git clone https://github.com/jjdonggyun/dtappsquare-erp.git
 Set-Location dtappsquare-erp
