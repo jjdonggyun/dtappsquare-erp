@@ -1,0 +1,7 @@
+import {requirePage} from "@/shared/auth/account";
+import {dateInTimeZone} from "@/shared/domain/date-time";
+import {environment} from "@/shared/infrastructure/env";
+import {settlement,settlements,settlementDelivery,settlementSetting} from "@/modules/corporate-card/infrastructure/repository";
+import {PageHeading} from "@/components/page-heading";
+import {CardSettlementClient} from "@/components/card-settlement-client";
+export default async function CardSettlementsPage({searchParams}:{searchParams:Promise<{month?:string}>}){const account=await requirePage("CARD_SETTLEMENT_READ");const today=dateInTimeZone(new Date(),environment().COMPANY_TIMEZONE);const previous=new Date(`${today.slice(0,7)}-01T00:00:00Z`);previous.setUTCMonth(previous.getUTCMonth()-1);const query=await searchParams;const month=query.month&&/^\d{4}-\d{2}-01$/.test(query.month)?query.month:previous.toISOString().slice(0,10);const canManage=account.permissions.includes("CARD_SETTLEMENT_MANAGE");const [reports,selected,setting]=await Promise.all([settlements(),settlement(month),canManage?settlementSetting():Promise.resolve(null)]);const deliveries=selected?await settlementDelivery(selected.id):[];return <><PageHeading eyebrow="CARD SETTLEMENT" title="법인카드 월 정산" description="전월 사용내역을 확인하고 Excel 생성, 마감, 발송 이력을 관리합니다."/><CardSettlementClient month={month} reports={reports} report={selected} deliveries={deliveries} setting={setting} canManage={canManage} canSend={account.permissions.includes("CARD_SETTLEMENT_SEND")} canReopen={account.permissions.includes("CARD_SETTLEMENT_REOPEN")}/></>}

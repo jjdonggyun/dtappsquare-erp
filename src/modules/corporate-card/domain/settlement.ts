@@ -1,0 +1,2 @@
+export type SettlementEntry={id:string;transaction_date:string;project_code:string;project_name:string;card:string;user_name:string;merchant:string;purpose:string;category:string;supply_amount:number;vat_amount:number;total_amount:number;memo:string};
+export type SettlementExport={id:string;settlement_month:string;generated_at:string;total_count:number;total_supply_amount:number;total_vat_amount:number;total_amount:number;entries_snapshot:SettlementEntry[]};

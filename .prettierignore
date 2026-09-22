@@ -1,0 +1,7 @@
+node_modules
+.next
+package-lock.json
+supabase/migrations
+supabase/seed.sql
+src/shared/infrastructure/supabase/database.types.ts
+.local

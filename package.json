@@ -1,0 +1,64 @@
+{
+  "name": "dtappsquare-erp",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "lint": "eslint .",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "build": "next build",
+    "start": "next start",
+    "seed:local": "node --env-file=.env.local --import tsx scripts/seed-local.ts",
+    "test:http": "node --env-file=.env.local --import tsx scripts/verify-http.ts",
+    "agent:local": "node scripts/device-agent.mjs",
+    "import:master-data": "node scripts/validate-master-data.mjs --dry-run",
+    "import:workforce-profile": "node --import tsx scripts/validate-workforce-profile-excel.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "26.4.1",
+    "@types/nodemailer": "8.0.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.4",
+    "postgres": "3.4.9",
+    "prettier": "3.9.6",
+    "supabase": "2.116.0",
+    "tailwindcss": "4.3.3",
+    "tsx": "4.23.13",
+    "typescript": "6.0.3",
+    "vitest": "5.0.0"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.12.6",
+    "@supabase/supabase-js": "2.115.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "exceljs": "^4.4.0",
+    "lucide-react": "1.42.0",
+    "next": "16.3.4",
+    "nodemailer": "10.0.9",
+    "pretendard": "1.3.9",
+    "radix-ui": "1.6.7",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "server-only": "0.0.1",
+    "tailwind-merge": "3.6.0",
+    "zod": "4.5.4"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "11.1.1"
+    }
+  },
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  },
+  "type": "module"
+}

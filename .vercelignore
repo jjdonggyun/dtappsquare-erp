@@ -1,0 +1,9 @@
+.env*
+.local/
+supabase/.temp/
+supabase/.branches/
+node_modules/
+.next/
+test-results/
+coverage/
+*.tsbuildinfo
