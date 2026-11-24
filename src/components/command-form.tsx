@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { createClientRequestId } from "@/shared/browser/client-request-id";
+import { apiErrorMessage } from "@/shared/browser/api-error";
 export type Field = {
   name: string;
   label: string;
@@ -17,6 +19,7 @@ export type Field = {
   min?: number;
   max?: number;
   step?: number;
+  compoundNames?: [string, string];
 };
 export function CommandForm({
   action,
@@ -28,6 +31,7 @@ export function CommandForm({
   columns = 2,
   sensitiveResultField,
   sensitiveResultLabel,
+  confirmMessage,
 }: {
   action?: string;
   fields?: Field[];
@@ -38,6 +42,7 @@ export function CommandForm({
   columns?: 1 | 2;
   sensitiveResultField?: string;
   sensitiveResultLabel?: string;
+  confirmMessage?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -48,17 +53,24 @@ export function CommandForm({
   const requestKey = useRef<string | null>(null);
   return (
     <form
+      action={endpoint}
       className="space-y-4"
+      method="post"
       onSubmit={async (event) => {
         event.preventDefault();
         if (busy) return;
+        if (confirmMessage && !window.confirm(confirmMessage)) return;
         setBusy(true);
         setMessage("");
         setSensitiveResult("");
         const form = new FormData(event.currentTarget);
         const payload: Record<string, unknown> = { ...constants };
         for (const field of fields) {
-          if (field.type === "checkbox") payload[field.name] = form.has(field.name);
+          if (field.compoundNames) {
+            const [first, second] = String(form.get(field.name) ?? "").split("|");
+            payload[field.compoundNames[0]] = first;
+            payload[field.compoundNames[1]] = second;
+          } else if (field.type === "checkbox") payload[field.name] = form.has(field.name);
           else if (field.type === "multi") payload[field.name] = form.getAll(field.name);
           else if (field.type === "number") payload[field.name] = Number(form.get(field.name));
           else {
@@ -67,7 +79,7 @@ export function CommandForm({
           }
         }
         try {
-          requestKey.current ??= crypto.randomUUID();
+          requestKey.current ??= createClientRequestId();
           const response = await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json", "X-Idempotency-Key": requestKey.current },
@@ -78,9 +90,7 @@ export function CommandForm({
           const result = await response.json();
           if (!response.ok) {
             setFailed(true);
-            setMessage(
-              `${result.error?.message ?? "처리하지 못했습니다."} (${result.error?.requestId ?? response.status})`,
-            );
+            setMessage(apiErrorMessage(result, "처리하지 못했습니다.", response.status));
           } else {
             requestKey.current = null;
             setFailed(false);
@@ -98,6 +108,7 @@ export function CommandForm({
         }
       }}
     >
+      {action ? <input type="hidden" name="action" value={action} /> : null}
       <div className={columns === 1 ? "grid gap-5" : "grid gap-4 sm:grid-cols-2"}>
         {fields.map((field) => (
           <div
@@ -174,7 +185,13 @@ export function CommandForm({
                 min={field.min}
                 max={field.max}
                 step={field.step}
-                autoComplete={field.type === "password" ? "new-password" : undefined}
+                autoComplete={
+                  field.type === "password"
+                    ? action === "login"
+                      ? "current-password"
+                      : "new-password"
+                    : undefined
+                }
               />
             )}
           </div>
@@ -182,7 +199,7 @@ export function CommandForm({
       </div>
       {message && (
         <Alert variant={failed ? "destructive" : "default"}>
-          <AlertDescription aria-live="polite">{message}</AlertDescription>
+          <AlertDescription aria-live="polite" className="whitespace-pre-line">{message}</AlertDescription>
         </Alert>
       )}
       {sensitiveResult ? (

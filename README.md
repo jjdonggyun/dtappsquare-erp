@@ -14,6 +14,8 @@ Phase 1~6의 운영 기능을 구현했습니다. 인증·인사·조직·RBAC, 
 - [실행·배포 및 운영](docs/deployment.md)
 - [Phase 2 검증 결과](docs/verification-phase2.md)
 - [최종 검증 결과](docs/verification-final.md)
+- [전체 ERP 사용자·테스트 가이드](docs/ERP-사용자-가이드.md)
+- [운영 Runbook](docs/operations-runbook.md)
 
 ## Phase 1 구현
 
@@ -79,7 +81,7 @@ npx supabase status
 - service role key → `SUPABASE_SERVICE_ROLE_KEY`
 - 개발 계정에 사용할 12자 이상의 별도 비밀번호 → `SEED_PASSWORD`
 
-`APP_URL=http://localhost:3000`과 실제 브라우저 주소를 일치시킵니다. `TEST_DATABASE_URL`은 기본 로컬 포트(55322)를 그대로 사용합니다. `.env.local`에는 service role key, 개발 계정 비밀번호, 도구가 발급한 임시 token 등이 들어갈 수 있으므로 private 저장소에도 커밋하지 않고 PC마다 새로 만듭니다. 팀에서 공유해야 하는 운영 비밀값은 저장소가 아닌 승인된 비밀 관리 도구로 전달합니다.
+`APP_URL=http://localhost:3200`과 실제 브라우저 주소를 일치시킵니다. 개발 서버는 다른 로컬 서비스의 3000·3100번 포트와 충돌하지 않도록 기본 3200번 포트를 사용합니다. 같은 개발 서버를 LAN 주소와 localhost 양쪽에서 사용할 때는 나머지 전체 origin(스킴과 포트 포함)을 `APP_ALLOWED_ORIGINS`에 쉼표로 구분해 추가합니다. `TEST_DATABASE_URL`은 기본 로컬 포트(55322)를 그대로 사용합니다. `.env.local`에는 service role key, 개발 계정 비밀번호, 도구가 발급한 임시 token 등이 들어갈 수 있으므로 private 저장소에도 커밋하지 않고 PC마다 새로 만듭니다. 팀에서 공유해야 하는 운영 비밀값은 저장소가 아닌 승인된 비밀 관리 도구로 전달합니다.
 
 초기 데이터와 개발 서버를 준비합니다.
 
@@ -92,7 +94,7 @@ npm run dev
 
 이후 다시 실행할 때는 Docker Desktop을 시작하고 `npx supabase start`, `npm run dev`만 실행하면 됩니다. 로컬 서비스를 종료하려면 `npx supabase stop`을 사용합니다. Docker 연결 오류가 나면 Docker Desktop의 Linux engine이 실행 중인지 먼저 확인합니다.
 
-- 앱: [localhost:3000](http://localhost:3000)
+- 앱: [localhost:3200](http://localhost:3200)
 - DB 관리: [Supabase Studio](http://127.0.0.1:55323)
 - 가입 확인 메일: [로컬 Mailpit](http://127.0.0.1:55324)
 
@@ -115,7 +117,7 @@ npm test
 npm run build
 ```
 
-Production HTTP 확인은 `npm start`를 별도 터미널에서 실행한 다음 `npm run test:http`로 진행합니다. 익명/직원/관리자 Auth cookie, Admin API 차단, CSRF, 입력 검증, SSR Dashboard를 검사합니다.
+Production HTTP 확인은 개발 서버를 종료하고 `npm start -- --port 3200`을 별도 터미널에서 실행한 다음 `npm run test:http`로 진행합니다. 익명/직원/관리자 Auth cookie, Admin API 차단, CSRF, 입력 검증, SSR Dashboard를 검사합니다.
 
 ```powershell
 npx supabase db lint --local --level warning --fail-on warning
@@ -138,3 +140,7 @@ Supabase Security/Performance Advisor는 운영 프로젝트 연결 후 Dashboar
 ## 운영 배포
 
 코드와 Vercel 프로젝트 연결은 준비되어 있습니다. 운영 Supabase 프로젝트 생성, migration 적용, 첫 ADMIN bootstrap, Vercel 환경변수 연결 순서는 [배포 문서](docs/deployment.md)를 따릅니다. 로컬 seed는 원격 URL을 거부합니다.
+
+## Ubuntu 내부 서버
+
+새 Supabase DB와 초기 관리자만 생성하는 운영 배포는 [deploy/UBUNTU.md](deploy/UBUNTU.md)를 참고하세요. main 자동 배포, 전용 Nginx, 예약 작업 scheduler를 포함하며 개발 seed는 실행하지 않습니다.

@@ -4,15 +4,15 @@ import { serverClient } from "@/shared/infrastructure/supabase/server";
 import { databaseError } from "@/shared/domain/errors";
 
 export const projectSchema=z.object({
-  id:z.uuid(),project_code:z.string(),project_name:z.string(),customer_name:z.string(),description:z.string().nullable(),
+  id:z.uuid(),project_code:z.string(),project_name:z.string(),customer_id:z.uuid().nullable(),contract_id:z.uuid().nullable(),opportunity_id:z.uuid().nullable(),quotation_revision_id:z.uuid().nullable(),sales_owner_id:z.uuid().nullable(),customer_name:z.string(),description:z.string().nullable(),
   planned_start_date:z.string(),planned_end_date:z.string(),actual_start_date:z.string().nullable(),actual_end_date:z.string().nullable(),
-  status:z.string(),project_manager_id:z.uuid(),version:z.number().int(),archived_at:z.string().nullable(),created_at:z.string(),updated_at:z.string(),
+  status:z.string(),project_manager_id:z.uuid(),closed_at:z.string().nullable(),closed_by:z.uuid().nullable(),closing_snapshot:z.unknown().nullable(),version:z.number().int(),archived_at:z.string().nullable(),created_at:z.string(),updated_at:z.string(),
   actual_progress:z.number().nullable(),
 });
 export const projectAssignmentSchema=z.object({
   id:z.uuid(),project_id:z.uuid(),user_id:z.uuid(),project_role:z.string(),planned_start_date:z.string(),planned_end_date:z.string(),
   actual_start_date:z.string().nullable(),actual_end_date:z.string().nullable(),allocation_rate:z.number(),status:z.string(),memo:z.string().nullable(),
-  assigned_by:z.uuid(),version:z.number().int(),created_at:z.string(),updated_at:z.string(),
+  planned_mm:z.number().nullable(),assigned_by:z.uuid(),version:z.number().int(),created_at:z.string(),updated_at:z.string(),
 });
 export async function projectCatalog(){const client=await serverClient();
   const projects:z.infer<typeof projectSchema>[]=[];const assignments:z.infer<typeof projectAssignmentSchema>[]=[];

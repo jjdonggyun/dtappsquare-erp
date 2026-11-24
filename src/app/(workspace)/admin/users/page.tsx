@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { z } from "zod";
 import { Search, RotateCcw, UserPlus } from "lucide-react";
-import { requirePage } from "@/shared/auth/account";
+import { requireAnyPage } from "@/shared/auth/account";
 import { employeeList } from "@/modules/users/infrastructure/repository";
 import { organizationCatalogs } from "@/modules/organization/infrastructure/repository";
 import { employeeFields } from "@/components/forms/employee-fields";
@@ -26,7 +26,7 @@ export default async function Users({
 }: {
   searchParams: Promise<{ page?: string; q?: string; status?: string; organization?: string }>;
 }) {
-  const account = await requirePage("USER_READ");
+  const account = await requireAnyPage(["USER_READ", "USER_READ_TEAM"]);
   const params = await searchParams;
   const page = Math.max(1, Math.min(10000, Number(params.page) || 1));
   const status = userStatus.safeParse(params.status).success ? params.status : undefined;

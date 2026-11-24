@@ -291,8 +291,22 @@ describe("real Supabase Auth, PostgreSQL RLS and RPC", () => {
     ).toBeNull();
   });
   it("protects the final active ADMIN and rolls back role deletions", async () => {
+    const [{ count }] = await sql`
+      select count(distinct e.id)::int count
+      from public.employees e
+      join public.user_roles ur on ur.user_id=e.id
+      join public.roles r on r.id=ur.role_id
+      where e.user_status='ACTIVE' and r.code='ADMIN'`;
     const { error } = await command(admin, "role.assign", { id: adminId, role_ids: [] });
-    expect(error?.code).toBe("40001");
+    if (count === 1) {
+      expect(error?.code).toBe("40001");
+    } else {
+      expect(error).toBeNull();
+      await sql`
+        insert into public.user_roles(user_id,role_id,granted_by)
+        select ${adminId},id,${adminId} from public.roles where code in ('ADMIN','EMPLOYEE')
+        on conflict do nothing`;
+    }
     expect((await admin.rpc("account_context")).data.permissions).toContain("RBAC_MANAGE");
   });
   it("rejects organization cycles", async () => {

@@ -1,6 +1,6 @@
 # Digital Square ERP 디자인
 
-참고: 사용자가 제공한 [Digital Square 사이트](https://digital-square.a4942963.chatgpt.site). Sites의 소유자용 읽기 정보를 통해 배포된 디자인 이미지를 확인했다. 원본 사이트는 수정하지 않았다.
+참고: 사용자가 제공한 [Digital Square 사이트](https://dtappsquare.vercel.app). Sites의 소유자용 읽기 정보를 통해 배포된 디자인 이미지를 확인했다. 원본 사이트는 수정하지 않았다.
 
 2026-09-08 요청에 따라 dark/lime 테마에서 회사 사이트의 white/navy/blue/yellow 언어로 변경했다.
 

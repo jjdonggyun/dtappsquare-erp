@@ -1,0 +1,76 @@
+x-app-environment: &app-environment
+  NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?Set Supabase URL}
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:?Set public API key}
+  SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?Set server API key}
+  APP_URL: ${APP_URL:?Set app URL}
+  APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-}
+  COMPANY_TIMEZONE: Asia/Seoul
+  EMAIL_PROVIDER: ${EMAIL_PROVIDER:-DISABLED}
+  EMAIL_FROM: ${EMAIL_FROM:-}
+  RESEND_API_KEY: ${RESEND_API_KEY:-}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_SECURE: ${SMTP_SECURE:-false}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  EMAIL_DISPATCH_SECRET: ${EMAIL_DISPATCH_SECRET:?Set email dispatcher secret}
+  CRON_SECRET: ${CRON_SECRET:?Set scheduler secret}
+  TRUSTED_CLIENT_IP_HEADER: x-dts-client-ip
+
+services:
+  app:
+    build:
+      context: .
+      target: runtime
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+        APP_URL: ${APP_URL}
+    restart: unless-stopped
+    environment: *app-environment
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 15s
+  frontend:
+    image: nginx:1.28-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_BIND_ADDRESS:-0.0.0.0}:3200:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+  tools:
+    profiles: [tools]
+    build:
+      context: .
+      target: tools
+    environment:
+      <<: *app-environment
+      ERP_DATABASE_URL: ${ERP_DATABASE_URL:?Set explicit ERP database URL}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      BOOTSTRAP_COMPANY_NAME: ${BOOTSTRAP_COMPANY_NAME:-디지털스퀘어}
+    networks: [default, supabase]
+  scheduler:
+    build:
+      context: .
+      target: scheduler
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      ERP_INTERNAL_URL: http://app:3000
+      CRON_SECRET: ${CRON_SECRET}
+      EMAIL_DISPATCH_SECRET: ${EMAIL_DISPATCH_SECRET}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-DISABLED}
+
+networks:
+  supabase:
+    external: true
+    name: ${SUPABASE_NETWORK:-digitalsquare-supabase_default}

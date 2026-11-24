@@ -18,7 +18,7 @@ Node 22.12+, Next.js Node runtime. 개발은 `.env.local`, Vercel은 환경별 e
 | RESEND_API_KEY | Resend credential | 절대 불가 |
 | SMTP_HOST/PORT/SECURE/USER/PASSWORD | SMTP credential | 절대 불가 |
 | EMAIL_DISPATCH_SECRET | outbox dispatcher bearer secret(32자 이상) | 절대 불가 |
-| CRON_SECRET | 월별 법인카드 정산 Cron bearer secret(32자 이상) | 절대 불가 |
+| CRON_SECRET | 월별 법인카드 정산·평일 청구/미수 알림 Cron bearer secret(32자 이상) | 절대 불가 |
 
 서버 Supabase client는 request cookies와 사용자 JWT로 동작한다. `provisioningClient`만 service key를 사용한다. Data API exposed schemas에 private를 추가하지 않는다. 일반 DB 쓰기는 table DML grant 없이 SECURITY INVOKER wrapper → 권한을 재검증하는 private function으로 제한한다.
 
@@ -52,6 +52,8 @@ Framework Next.js, install `npm ci`, build `npm run build`, Node 22 이상을 �
 
 법인카드 월 정산은 `vercel.json`의 매시 Cron이 GET `/api/internal/monthly-card-settlement`을 호출한다. Vercel 환경에 32자 이상의 `CRON_SECRET`을 설정한다. 운영 전 `/admin/card-settlements`에서 자동 발송 사용 여부, 수신자/CC, 매월 발송일·시간(Asia/Seoul)을 저장한다. 초기값은 자동 발송 OFF이므로 설정 전에는 발송하지 않는다. Cron은 설정된 시각 이후 전월 보고서와 비공개 Excel을 생성하고 마감 후 기존 notification outbox에 중복 방지 키로 적재한다. 기존 email dispatcher가 첨부파일을 포함해 전송한다. Cron 일정은 UTC 기준이며 회사 시각 검사는 서버에서 수행한다. 매시 일정이 해당 Vercel 요금제에서 허용되는지 배포 전에 확인한다.
 
+Phase 6 운영 알림은 `vercel.json`의 평일 00:00 UTC Cron이 GET `/api/internal/operational-alerts`를 호출한다. 7일 안에 도래하는 청구 일정과 입금기한이 지난 미수 청구를 찾아 권한 있는 담당자의 인앱 알림·email outbox에 넣는다. 일정/청구/수신자별 event key로 중복을 막고 `/reports`에서 실행 이력과 건수를 확인한다. 장애 복구·수동 실행은 [운영 Runbook](operations-runbook.md)을 따른다.
+
 영수증은 `expense-receipts`, 월 정산 Excel은 `card-settlements` 비공개 Supabase Storage 버킷에 저장한다. 다운로드는 사용자 세션과 RLS 또는 서버 권한 검사를 거치며 공개 URL은 발급하지 않는다. 월 정산의 파일 키·SHA-256·발송 상태와 outbox 최근 시도는 관리 화면에서 확인한다. 외부 수신자에게 보내는 실제 첨부 메일은 운영 SMTP/Resend 자격 증명과 도메인 확인 후 별도로 검증한다.
 
 ## 실패 복구
@@ -80,3 +82,7 @@ Framework Next.js, install `npm ci`, build `npm run build`, Node 22 이상을 �
 ## Phase 11 적용 순서
 
 운영 적용 전 DB backup/PITR과 Preview에서 `20260920121433`~`20260920124339`의 Phase 11 forward-only migration을 순서대로 검증한다. 새 인력프로필 메뉴는 권한에 따라 보이며 기존 프로젝트/직원/Resource 데이터는 복사하거나 삭제하지 않는다. Excel Export는 private/no-store이고 감사 로그에 대상과 생년월일 포함 여부를 남긴다. 실제 직원 인력프로필 Excel/CSV는 저장소에 두지 말고 접근 제한된 위치에서 `npm run import:workforce-profile -- <file.xlsx> --dry-run` 및 `npm run import:master-data -- <directory>`로 검증한다. 두 명령은 DB에 쓰지 않으며 실제 Import 적용 경로는 Phase 12에서 별도 검토한다.
+
+## Hyper-V Ubuntu 운영
+
+사내 VM 자체 호스팅은 [Ubuntu 설치·운영 안내](../deploy/UBUNTU.md)를 사용합니다. 아래 로컬 개발용 seed 절차와 구분해 운영에서는 명시적 원격 DB migration과 최초 관리자 bootstrap만 수행합니다.

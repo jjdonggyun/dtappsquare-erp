@@ -31,6 +31,7 @@ export const employeeCommands = [
         employee_number: z.string().trim().max(40).optional(),
         join_date: date.optional(),
         organization_id: optionalId,
+        role_code: z.enum(["MEMBER", "TEAM_LEADER", "ADMINISTRATIVE_POSITION", "HEAD"]).optional(),
         resignation_date: date.optional(),
       })
       .strict(),

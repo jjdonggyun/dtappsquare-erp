@@ -4,6 +4,7 @@ const schema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(10),
   APP_URL: z.url(),
+  APP_ALLOWED_ORIGINS: z.string().optional(),
   COMPANY_TIMEZONE: z.string().default("Asia/Seoul"),
 });
 export function environment() {

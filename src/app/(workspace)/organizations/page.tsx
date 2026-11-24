@@ -36,7 +36,7 @@ function Branch({ nodes, people }: { nodes: OrganizationNode[]; people: Person[]
   );
 }
 export default async function Organizations() {
-  await requirePage();
+  await requirePage("ORGANIZATION_READ");
   const data = await organizationCatalogs();
   return (
     <>

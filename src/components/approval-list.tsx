@@ -35,7 +35,11 @@ export function ApprovalList({
                     ? leaveTypeLabels[
                         request.leave.leave_type as keyof typeof leaveTypeLabels
                       ]
-                    : request.request_type}
+                    : request.quotation
+                      ? `견적 ${request.quotation.quote?.quotation_number ?? ""} · V${request.quotation.revision.revision_no}`
+                      : request.contract
+                        ? `계약 ${request.contract.contract_number}`
+                        : request.request_type}
                   <span className="ml-2 font-normal text-muted-foreground">
                     · {request.requesterName}
                   </span>
@@ -43,7 +47,11 @@ export function ApprovalList({
                 <p className="mt-2 text-[11px] text-muted-foreground">
                   {request.leave
                     ? `${request.leave.start_date} – ${request.leave.end_date} · ${request.leave.duration}일`
-                    : request.reference_id}
+                    : request.quotation
+                      ? `${request.quotation.quote?.customer?.name ?? "고객사"} · ${request.quotation.revision.project_name} · ${new Intl.NumberFormat("ko-KR").format(request.quotation.revision.total_amount)}원`
+                      : request.contract
+                        ? `${request.contract.customer?.name ?? "고객사"} · ${request.contract.contract_name} · ${new Intl.NumberFormat("ko-KR").format(request.contract.total_amount)}원`
+                        : request.reference_id}
                 </p>
               </div>
               <Badge variant="outline">
@@ -77,9 +85,9 @@ export function ApprovalList({
                     </li>
                   ))}
                 </ol>
-                {request.leave && (
+                {(request.leave || request.quotation || request.contract) && (
                   <div className="mt-5 rounded-md bg-muted px-4 py-3 text-xs leading-6 text-muted-foreground">
-                    {request.leave.reason}
+                    {request.leave?.reason ?? (request.contract ? "계약 조건과 금액을 검토한 뒤 승인 또는 반려해 주세요." : "견적 Header와 Detail을 검토한 뒤 승인 또는 반려해 주세요.")}
                   </div>
                 )}
               </div>
@@ -87,7 +95,7 @@ export function ApprovalList({
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
                   <div className="rounded-md border border-[#cfe4d9] bg-[#f6fbf8] p-4">
                     <CommandForm
-                      endpoint="/api/leave-approval"
+                      endpoint={request.request_type === "QUOTATION" ? "/api/quotation" : request.request_type === "CONTRACT" ? "/api/contract" : "/api/leave-approval"}
                       action="approval.decide"
                       constants={{
                         id: request.id,
@@ -101,14 +109,14 @@ export function ApprovalList({
                   </div>
                   <div className="rounded-md border border-[#efd1d1] bg-[#fffafa] p-4">
                     <CommandForm
-                      endpoint="/api/leave-approval"
+                      endpoint={request.request_type === "QUOTATION" ? "/api/quotation" : request.request_type === "CONTRACT" ? "/api/contract" : "/api/leave-approval"}
                       action="approval.decide"
                       constants={{
                         id: request.id,
                         version: request.version,
                         decision: "REJECTED",
                       }}
-                      fields={[{ name: "comment", label: "반려 의견" }]}
+                      fields={[{ name: "comment", label: "반려 사유", required: true, minLength: 2 }]}
                       submit="반려"
                       columns={1}
                     />

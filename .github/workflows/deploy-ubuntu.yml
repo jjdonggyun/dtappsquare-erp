@@ -1,0 +1,25 @@
+name: Deploy Ubuntu
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: deploy-ubuntu
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Linux, X64, dtappsquare-erp]
+    timeout-minutes: 60
+    env:
+      DEPLOY_ENV_FILE: /home/dsadmin/deploy-config/dtappsquare-erp.env
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Build, migrate and deploy
+        shell: bash
+        run: bash scripts/deploy_ubuntu.sh

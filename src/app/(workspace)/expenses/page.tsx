@@ -1,10 +1,17 @@
-import Link from "next/link";
-import {requireAnyPage} from "@/shared/auth/account";
-import {dateInTimeZone} from "@/shared/domain/date-time";
-import {environment} from "@/shared/infrastructure/env";
-import {projectCatalog} from "@/modules/project/infrastructure/repository";
-import {cardCatalog,projectExpenses} from "@/modules/corporate-card/infrastructure/repository";
-import {organizationCatalogs} from "@/modules/organization/infrastructure/repository";
-import {PageHeading} from "@/components/page-heading";
-import {ProjectExpensePanel} from "@/components/project-expense-panel";
-export default async function ExpensesPage({searchParams}:{searchParams:Promise<{project?:string}>}){const account=await requireAnyPage(["EXPENSE_READ_SELF","EXPENSE_READ_ALL"]);const [projects,cards,people]=await Promise.all([projectCatalog(),cardCatalog(),organizationCatalogs()]);const query=await searchParams;const selected=projects.projects.find(project=>project.id===query.project)??projects.projects[0];const expenses=selected?await projectExpenses(selected.id):[];return <><PageHeading eyebrow="EXPENSE" title="법인카드 사용내역" description="프로젝트에 배정된 법인카드 비용을 기록하고 영수증을 첨부합니다."/><div className="mb-5 flex flex-wrap gap-2">{projects.projects.map(project=><Link key={project.id} href={`/expenses?project=${project.id}`} className={`rounded-md border px-3 py-2 text-xs ${selected?.id===project.id?"border-primary bg-brand-soft font-semibold":"bg-white"}`}>{project.project_name}</Link>)}</div>{selected?<ProjectExpensePanel projectId={selected.id} cards={cards.cards} assignments={cards.assignments} expenses={expenses} summary={null} people={people.directory} canWrite={account.permissions.includes("EXPENSE_WRITE_SELF")||account.permissions.includes("EXPENSE_MANAGE")} canManage={account.permissions.includes("EXPENSE_MANAGE")} today={dateInTimeZone(new Date(),environment().COMPANY_TIMEZONE)} accountId={account.id}/>:<p className="rounded-md border bg-white p-6 text-sm text-muted-foreground">조회 가능한 프로젝트가 없습니다.</p>}</>}
+import { PageHeading } from "@/components/page-heading";
+import { ExpenseLedger } from "@/components/expense-ledger";
+import { requireAnyPage } from "@/shared/auth/account";
+import { dateInTimeZone } from "@/shared/domain/date-time";
+import { environment } from "@/shared/infrastructure/env";
+import { expenseFinanceCatalogs, expenseLedger } from "@/modules/expense-finance/infrastructure/repository";
+
+export default async function ExpensesPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
+  const account = await requireAnyPage(["EXPENSE_READ_SELF", "EXPENSE_READ_PROJECT", "EXPENSE_READ_ALL", "EXPENSE_MANAGE"]);
+  const query = await searchParams;
+  const [catalogs, rows] = await Promise.all([expenseFinanceCatalogs(), expenseLedger(query.project)]);
+  return <><PageHeading eyebrow="EXPENSE LEDGER" title="통합 비용 원장" description="법인카드, 계좌이체, 현금, 세금계산서 비용을 프로젝트별로 승인·지급까지 관리합니다." />
+    <ExpenseLedger expenses={rows} types={catalogs.types} vendors={catalogs.vendors} projects={catalogs.projects} cards={catalogs.cards} assignments={catalogs.assignments} accountId={account.id}
+      canWrite={account.permissions.includes("EXPENSE_WRITE_SELF") || account.permissions.includes("EXPENSE_MANAGE")} canManage={account.permissions.includes("EXPENSE_MANAGE")}
+      today={dateInTimeZone(new Date(), environment().COMPANY_TIMEZONE)} />
+  </>;
+}

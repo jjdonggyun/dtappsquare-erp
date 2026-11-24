@@ -61,6 +61,16 @@ try {
     if (user.role === "EMPLOYEE") seedEmployeeId = id;
     await sql.begin(async (tx) => {
       await tx`update public.employees set employee_number=${user.number},join_date='2026-01-01',organization_id=${user.org},user_status='ACTIVE',position_id=(select id from public.positions where code='STAFF') where id=${id!}`;
+      if (user.role === "ADMIN") {
+        await tx`delete from public.user_roles ur using public.roles r
+          where ur.role_id=r.id and ur.user_id=${id!} and r.code not in ('ADMIN','EMPLOYEE')`;
+      } else if (user.role === "TEAM_MANAGER") {
+        await tx`delete from public.user_roles ur using public.roles r
+          where ur.role_id=r.id and ur.user_id=${id!} and r.code not in ('TEAM_MANAGER','PROJECT_MANAGER','EMPLOYEE')`;
+      } else {
+        await tx`delete from public.user_roles ur using public.roles r
+          where ur.role_id=r.id and ur.user_id=${id!} and r.code<>'EMPLOYEE'`;
+      }
       await tx`insert into public.user_roles(user_id,role_id) select ${id!},id from public.roles where code in (${user.role},'EMPLOYEE') on conflict do nothing`;
       const policyId =
         user.role === "EMPLOYEE"

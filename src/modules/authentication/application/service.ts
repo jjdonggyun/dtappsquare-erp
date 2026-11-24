@@ -20,6 +20,13 @@ const inputSchema = z.discriminatedUnion("action", [
     })
     .strict(),
   z.object({ action: z.literal("signout") }).strict(),
+  z
+    .object({
+      action: z.literal("password.change"),
+      password: z.string().min(12).max(128),
+      password_confirmation: z.string().min(12).max(128),
+    })
+    .strict(),
 ]);
 export async function authenticate(input: unknown) {
   const parsed = inputSchema.parse(input);
@@ -29,11 +36,20 @@ export async function authenticate(input: unknown) {
     if (error) throw new AppError("InternalError");
     return { redirect: "/login" };
   }
+  if (parsed.action === "password.change") {
+    if (parsed.password !== parsed.password_confirmation) throw new AppError("ValidationError");
+    const { data: userData, error: userError } = await client.auth.getUser();
+    if (userError || !userData.user) throw new AppError("Unauthorized");
+    const { error } = await client.auth.updateUser({ password: parsed.password });
+    if (error) throw new AppError("ValidationError");
+    return { message: "비밀번호를 변경했습니다." };
+  }
   if (parsed.action === "login") {
     const { error } = await client.auth.signInWithPassword({
       email: parsed.email,
       password: parsed.password,
     });
+    if (error?.code === "email_not_confirmed") throw new AppError("EmailNotConfirmed");
     if (error) throw new AppError("Unauthorized");
     return { redirect: "/dashboard" };
   }

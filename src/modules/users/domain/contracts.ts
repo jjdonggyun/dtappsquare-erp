@@ -25,6 +25,8 @@ export const accountSchema = z.object({
   name: z.string(),
   status: userStatus,
   permissions: z.array(z.string()),
+  roles: z.array(z.string()).optional(),
+  organizationId: z.uuid().nullable().optional(),
 });
 export type Account = z.infer<typeof accountSchema>;
 export const statusLabels: Record<z.infer<typeof userStatus>, string> = {

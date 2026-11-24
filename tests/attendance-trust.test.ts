@@ -62,6 +62,17 @@ describe("Phase 10 attendance trust",()=>{
   const unknown=await prepare(employeeId);expect((await prove(unknown.id,{device:crypto.randomUUID()})).data.accepted).toBe(false);
   const copied=await prepare(employeeId);expect((await prove(copied.id,{credential:"x".repeat(64)})).data.accepted).toBe(false);
  });
+ it("reports that a device is not required by network-only policy",async()=>{
+  await sql`update public.company_settings set value='{"mode":"NETWORK_ONLY"}'::jsonb where key='attendance.verification'`;
+  try{
+   const verified=await prepare(employeeId,"CHECK_IN","203.0.113.10");
+   expect(verified).toMatchObject({status:"READY",network_status:"VERIFIED",device_status:"NOT_REQUIRED"});
+   const unknown=await prepare(employeeId,"CHECK_IN",null);
+   expect(unknown).toMatchObject({status:"FAILED",network_status:"UNKNOWN",device_status:"NOT_REQUIRED"});
+  }finally{
+   await sql`update public.company_settings set value='{"mode":"DEVICE_AND_NETWORK"}'::jsonb where key='attendance.verification'`;
+  }
+ });
  it("rejects revoked, replayed, stale and another employee's device",async()=>{
   await sql`update public.registered_devices set active=false where id=${deviceRowId}`;
   const revoked=await prepare(employeeId);expect((await prove(revoked.id)).data.accepted).toBe(false);

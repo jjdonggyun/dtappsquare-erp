@@ -9,6 +9,7 @@ export async function roleCatalogs() {
     client.from("permissions").select("*").order("code"),
     client.from("role_permissions").select("*"),
     client.from("user_roles").select("*"),
+    client.from("user_permission_overrides").select("*"),
   ]);
   for (const result of results) if (result.error) throw databaseError(result.error);
   return {
@@ -30,5 +31,8 @@ export async function roleCatalogs() {
       .array(z.object({ role_id: z.uuid(), permission_id: z.uuid() }))
       .parse(results[2].data),
     userRoles: z.array(z.object({ user_id: z.uuid(), role_id: z.uuid() })).parse(results[3].data),
+    overrides: z.array(z.object({
+      user_id: z.uuid(), permission_id: z.uuid(), allowed: z.boolean(), data_scope: z.string().nullable(),
+    })).parse(results[4].data),
   };
 }

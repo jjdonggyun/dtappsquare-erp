@@ -19,4 +19,4 @@
 
 ## 검증 범위의 한계
 
-Vercel 실 ingress에서 client IP가 들어오는지, 회사 PC에 설치된 Agent의 비밀 보관, 실제 Office CIDR·VPN·RDP, 운영 rate limit/로그 보존은 로컬 테스트로 입증할 수 없다. 현재 로컬 환경의 IP는 의도대로 `UNKNOWN`이며 일반 출퇴근이 거절된다. Windows 서비스 패키징과 실제 직원 Pilot도 수행하지 않았다.
+Vercel 실 ingress에서 client IP가 들어오는지, 회사 PC에 설치된 Agent의 비밀 보관, 실제 Office CIDR·VPN·RDP, 운영 rate limit/로그 보존은 로컬 테스트로 입증할 수 없다. 로컬 환경은 기본적으로 `UNKNOWN`이며, 개발자가 `ATTENDANCE_DEV_CLIENT_IP`를 명시한 경우에만 localhost와 LAN 테스트에서 해당 IP를 신뢰한다. Windows 서비스 패키징과 실제 직원 Pilot도 수행하지 않았다.

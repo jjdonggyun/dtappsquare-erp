@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <header className="flex h-20 items-center justify-between border-b px-6 md:px-12">
         <Brand />
         <a
-          href="https://digital-square.a4942963.chatgpt.site"
+          href="https://dtappsquare.vercel.app"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-3 border-b border-foreground pb-1.5 text-xs font-medium"

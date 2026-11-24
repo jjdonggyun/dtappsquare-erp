@@ -2,7 +2,7 @@
 
 ## 신뢰 경계
 
-서버가 Vercel production/preview ingress에서 실행될 때만 단일한 유효 `X-Forwarded-For` IP를 사용한다. Vercel은 해당 헤더를 ingress에서 덮어써 spoofing을 막는다고 문서화한다. 로컬·미확인 proxy·복수 IP 헤더는 `UNKNOWN`으로 처리하고 사무실 확인으로 인정하지 않는다. 실제 배포에서 Vercel 앞의 추가 proxy/CDN, 우회 origin, IPv6, NAT 경로를 확인해야 한다. 신뢰 근거: [Vercel Request Headers](https://vercel.com/docs/headers/request-headers).
+서버가 Vercel production/preview ingress에서 실행될 때만 단일한 유효 `X-Forwarded-For` IP를 사용한다. Vercel은 해당 헤더를 ingress에서 덮어써 spoofing을 막는다고 문서화한다. 로컬 개발에서는 `NODE_ENV=development`이고 유효한 `ATTENDANCE_DEV_CLIENT_IP`를 명시한 경우 localhost와 LAN 접속 모두 그 IP를 사용한다. 이 override는 개발 PC의 신뢰 가능한 테스트 환경에서만 설정하며 운영·preview에서는 무시된다. 그 밖의 미확인 proxy·복수 IP 헤더는 `UNKNOWN`으로 처리하고 사무실 확인으로 인정하지 않는다. 실제 배포에서 Vercel 앞의 추가 proxy/CDN, 우회 origin, IPv6, NAT 경로를 확인해야 한다. 신뢰 근거: [Vercel Request Headers](https://vercel.com/docs/headers/request-headers).
 
 ADMIN은 `/admin/attendance-verification`에서 여러 활성 CIDR을 등록할 수 있다. 하드코딩한 회사 주소는 없다. IP는 DB의 `inet <<= cidr`로 대조하며 여러 정책이 맞으면 가장 좁은 CIDR을 택한다. 허용 네트워크가 없거나 trusted IP가 없으면 기본 `DEVICE_AND_NETWORK`의 일반 출퇴근은 실패한다. 준비 후 정책이 중지되면 기록 단계에서 다시 거절한다.
 

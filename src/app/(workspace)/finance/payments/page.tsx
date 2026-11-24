@@ -1,0 +1,22 @@
+import { CommandForm } from "@/components/command-form";
+import { PageHeading } from "@/components/page-heading";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { financeOptions, paymentList } from "@/modules/finance/infrastructure/repository";
+import { requireAnyPage } from "@/shared/auth/account";
+
+const money = new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 0 });
+export default async function PaymentsPage() {
+  const account = await requireAnyPage(["PAYMENT_READ","PAYMENT_READ_ALL","PAYMENT_MANAGE"]);
+  const canManage = account.permissions.includes("PAYMENT_MANAGE");
+  const [rows, options] = await Promise.all([paymentList(), canManage ? financeOptions() : Promise.resolve({ projects: [], contracts: [], customers: [], banks: [] })]);
+  const today = new Date().toISOString().slice(0,10);
+  const confirmed = rows.filter((row) => row.status === "CONFIRMED");
+  const total = confirmed.reduce((sum,row) => sum+row.amount,0); const unallocated = confirmed.reduce((sum,row) => sum+row.remainingAmount,0);
+  return <><PageHeading eyebrow="PAYMENTS" title="입금 · 수금배분" description="통장 입금내역을 등록하고 여러 청구서에 부분 또는 전액 배분합니다." />
+    <div className="mb-6 grid gap-4 sm:grid-cols-2"><Card><CardContent className="pt-6"><p className="text-xs text-muted-foreground">확정 입금액</p><p className="mt-2 text-xl font-bold">{money.format(total)}원</p></CardContent></Card><Card><CardContent className="pt-6"><p className="text-xs text-muted-foreground">미배분액</p><p className="mt-2 text-xl font-bold">{money.format(unallocated)}원</p></CardContent></Card></div>
+    <div className={`grid items-start gap-6 ${canManage ? "xl:grid-cols-[minmax(0,2fr)_minmax(360px,1fr)]" : ""}`}><Card><CardHeader><CardTitle>입금 원장</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow>{["입금번호","입금일","고객사 / 입금자","입금액","배분액","미배분액","연결 청구","상태","작업"].map((label) => <TableHead key={label}>{label}</TableHead>)}</TableRow></TableHeader><TableBody>{rows.map((row) => <TableRow key={row.id}><TableCell className="font-semibold">{row.payment_number}</TableCell><TableCell>{row.received_date}</TableCell><TableCell><p>{row.customer?.name ?? "—"}</p><p className="text-xs text-muted-foreground">{row.payer_name}</p></TableCell><TableCell>{money.format(row.amount)}원</TableCell><TableCell>{money.format(row.allocatedAmount)}원</TableCell><TableCell className="font-semibold">{money.format(row.remainingAmount)}원</TableCell><TableCell>{row.allocations.map((allocation) => <p key={allocation.id} className="text-xs">{allocation.billing?.billing_number} · {money.format(allocation.amount)}원</p>)}</TableCell><TableCell><Badge variant={row.status === "CANCELED" ? "destructive" : "outline"}>{row.status === "CONFIRMED" ? "확정" : "취소"}</Badge></TableCell><TableCell>{canManage && row.status === "CONFIRMED" ? <CommandForm endpoint="/api/project-finance" action="payment.cancel" constants={{ id: row.id, version: row.version }} submit="취소" columns={1} confirmMessage="이 입금내역을 취소할까요? 연결된 청구서의 수금상태가 다시 계산됩니다." /> : "—"}</TableCell></TableRow>)}</TableBody></Table>{!rows.length && <p className="py-12 text-center text-sm text-muted-foreground">등록된 입금이 없습니다.</p>}</CardContent></Card>
+      {canManage && <Card><CardHeader><CardTitle>입금 등록</CardTitle></CardHeader><CardContent>{options.customers.length ? <CommandForm endpoint="/api/project-finance" action="payment.save" columns={1} fields={[{ name:"customer_id",label:"고객사",type:"select",options:options.customers.map((customer) => ({value:customer.id,label:`${customer.customer_code} · ${customer.name}`})),required:true },{ name:"project_id",label:"프로젝트 (선택)",type:"select",options:options.projects.map((project) => ({value:project.id,label:`${project.project_code} · ${project.project_name}`})) },{ name:"bank_account_id",label:"입금 계좌",type:"select",options:options.banks.map((bank) => ({value:bank.id,label:`${bank.bank_name} ${bank.account_number}`})) },{ name:"received_date",label:"입금일",type:"date",value:today,required:true },{ name:"amount",label:"입금액",type:"number",min:1,step:1,required:true },{ name:"payer_name",label:"입금자명",required:true },{ name:"bank_reference",label:"통장 적요" },{ name:"note",label:"비고",type:"textarea" }]} submit="입금 등록" /> : <p className="text-sm text-muted-foreground">활성 고객사가 없습니다.</p>}</CardContent></Card>}
+    </div></>;
+}

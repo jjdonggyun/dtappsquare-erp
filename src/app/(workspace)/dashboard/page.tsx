@@ -21,6 +21,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { requirePage } from "@/shared/auth/account";
+import { RoleDashboard } from "@/modules/dashboard/components/role-dashboard";
 import { dashboardMetrics } from "@/modules/users/application/dashboard";
 import { employeeList } from "@/modules/users/infrastructure/repository";
 import { organizationCatalogs } from "@/modules/organization/infrastructure/repository";
@@ -94,6 +95,11 @@ export default async function Dashboard({
   searchParams: Promise<{ view?: string }>;
 }) {
   const account = await requirePage();
+  const businessRole = (["HEAD", "ADMINISTRATIVE_POSITION", "TEAM_LEADER", "MEMBER", "GUEST"] as const)
+    .find((role) => account.roles?.includes(role));
+  const displayRole = businessRole === "MEMBER" && account.roles?.some((role) => ["ADMIN", "HR_MANAGER", "FINANCE_MANAGER"].includes(role))
+    ? "ADMINISTRATIVE_POSITION" : businessRole;
+  if (displayRole) return <RoleDashboard account={account} role={displayRole} />;
   const admin = account.permissions.includes("USER_READ");
   const team = account.permissions.includes("USER_READ_TEAM");
   const showRequests = admin && (await searchParams).view === "requests";
@@ -167,7 +173,7 @@ export default async function Dashboard({
       { label: "오늘 휴가", value: onLeave, unit: "명", icon: PlaneTakeoff, note: "전일·반일 휴가", href: "/admin/leave" },
       { label: "대기 인력", value: resourcePlan.filter((row) => row.state === "WAITING").length, unit: "명", icon: UserCheck, note: "현재 미투입", href: "/admin/resources?state=WAITING" },
       { label: "투입 인력", value: new Set(currentAssignments.map((row) => row.user_id)).size, unit: "명", icon: BriefcaseBusiness, note: "현재 투입 중", href: "/admin/resources?state=IN_PROGRESS" },
-      { label: "진행 프로젝트", value: projects.projects.filter((row) => row.status === "IN_PROGRESS").length, unit: "개", icon: BriefcaseBusiness, note: "진행 상태 기준", href: "/admin/projects" },
+      { label: "진행 프로젝트", value: projects.projects.filter((row) => row.status === "IN_PROGRESS").length, unit: "개", icon: BriefcaseBusiness, note: "진행 상태 기준", href: "/projects" },
       { label: "사용 중 자산", value: assets.assignments.filter((row) => !row.returned_at).length, unit: "대", icon: PackageOpen, note: "미반납 기준", href: "/admin/assets" },
       { label: "주간보고 확정", value: weeklyConfirmed, unit: "명", icon: Presentation, note: `미작성 ${weeklyMissing}명`, href: "/weekly-reports" },
       { label: "오늘 업무 미작성", value: unlogged, unit: "명", icon: NotebookPen, note: "승인 휴가 여부는 주간보고에서 확인", href: "/work-logs" },
@@ -178,7 +184,7 @@ export default async function Dashboard({
       { label: "관리 조직 구성원", value: roster.length, unit: "명", icon: Users, note: "본인 포함 조회 인원", href: "/admin/attendance" },
       { label: "오늘 출근", value: checkedIn, unit: "명", icon: LogIn, note: `${today} 기록`, href: "/admin/attendance" },
       { label: "휴가 승인 대기", value: waitingApprovals.length, unit: "건", icon: ClipboardCheck, note: "현재 내 결재 단계", href: "/approvals" },
-      { label: "프로젝트 투입", value: new Set(currentAssignments.map((row) => row.user_id)).size, unit: "명", icon: BriefcaseBusiness, note: "관리 조직 프로젝트", href: "/admin/projects" },
+      { label: "프로젝트 투입", value: new Set(currentAssignments.map((row) => row.user_id)).size, unit: "명", icon: BriefcaseBusiness, note: "관리 조직 프로젝트", href: "/projects" },
       { label: "팀 업무일지", value: workStatus.length-unlogged, unit: "명", icon: NotebookPen, note: `미작성 ${unlogged}명`, href: "/work-logs" },
       { label: "주간보고", value: weeklyConfirmed, unit: "명", icon: Presentation, note: `미작성 ${weeklyMissing}명`, href: "/weekly-reports" },
     ];

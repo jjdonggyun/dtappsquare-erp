@@ -10,6 +10,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
   return (
     <WorkspaceShell
       name={account.name}
+      roles={account.roles ?? []}
       permissions={account.permissions}
       unreadNotifications={unreadNotifications}
     >

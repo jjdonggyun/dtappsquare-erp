@@ -63,6 +63,36 @@ export default async function Profile() {
             />
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>비밀번호 변경</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CommandForm
+              endpoint="/api/auth"
+              action="password.change"
+              flat
+              columns={1}
+              fields={[
+                {
+                  name: "password",
+                  label: "새 비밀번호 (12자 이상)",
+                  type: "password",
+                  required: true,
+                  minLength: 12,
+                },
+                {
+                  name: "password_confirmation",
+                  label: "새 비밀번호 확인",
+                  type: "password",
+                  required: true,
+                  minLength: 12,
+                },
+              ]}
+              submit="비밀번호 변경"
+            />
+          </CardContent>
+        </Card>
       </div>
     </>
   );

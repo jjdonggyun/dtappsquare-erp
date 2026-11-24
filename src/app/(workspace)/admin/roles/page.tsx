@@ -47,9 +47,9 @@ export default async function Roles() {
                     </span>
                   </summary>
                   <div className="mt-5">
-                    {role.code === "ADMIN" ? (
+                    {role.system ? (
                       <p className="text-sm text-muted-foreground">
-                        기본 ADMIN의 전체 권한은 migration으로 관리하며 UI에서 변경할 수 없습니다.
+                        기본 역할 권한은 migration으로 관리하며 UI에서 변경할 수 없습니다.
                       </p>
                     ) : (
                       <CommandForm
