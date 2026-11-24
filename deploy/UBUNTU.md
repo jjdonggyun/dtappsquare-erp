@@ -17,7 +17,7 @@
 - 공개 API: `NEXT_PUBLIC_SUPABASE_URL=http://192.168.1.109:8000`
 - 앱: `APP_URL=http://192.168.1.109:3200`
 - 공개 publishable key만 Docker build argument로 전달합니다. service role/secret key, 관리자 비밀번호, DB 비밀번호는 runtime/tools 환경변수로만 전달합니다.
-- tools는 외부 Docker network `digitalsquare-supabase_default`에 연결해 `supabase-db:5432`를 사용합니다. URL 비밀번호는 percent encoding합니다. 호스트 DB 포트는 loopback에만 바인딩합니다.
+- tools는 외부 Docker network `digitalsquare-supabase_default`에 연결해 `supabase-db:5432`를 사용합니다. 이 내부 전용 DB 연결에는 `?sslmode=disable`을 명시합니다. 기본 DB 컨테이너가 TLS를 제공하지 않아 이 옵션이 없으면 CLI가 migration 전에 중단됩니다. URL 비밀번호는 percent encoding합니다. 호스트 DB 포트는 loopback에만 바인딩합니다.
 
 Supabase의 `SUPABASE_PUBLIC_URL`, `API_EXTERNAL_URL`, `SITE_URL`, `ADDITIONAL_REDIRECT_URLS`도 실제 VM 주소와 맞춥니다. API_EXTERNAL_URL에는 `/auth/v1`이 포함됩니다. 공개 URL이나 key를 바꾸면 브라우저 번들에 들어가므로 앱을 다시 빌드해야 합니다. 도메인/HTTPS 전환 시 앱과 Supabase의 URL을 함께 변경합니다.
 
