@@ -21,9 +21,29 @@
 
 Supabase의 `SUPABASE_PUBLIC_URL`, `API_EXTERNAL_URL`, `SITE_URL`, `ADDITIONAL_REDIRECT_URLS`도 실제 VM 주소와 맞춥니다. API_EXTERNAL_URL에는 `/auth/v1`이 포함됩니다. 공개 URL이나 key를 바꾸면 브라우저 번들에 들어가므로 앱을 다시 빌드해야 합니다. 도메인/HTTPS 전환 시 앱과 Supabase의 URL을 함께 변경합니다.
 
+### 사내 가입 승인 방식
+
+현재 사내 ERP는 이메일 소유 확인을 생략하고 관리자 승인만 사용합니다. 플랫폼 `/home/dsadmin/platform/supabase/.env`에서 `ENABLE_EMAIL_SIGNUP=true`, `DISABLE_SIGNUP=false`, `ENABLE_EMAIL_AUTOCONFIRM=true`를 유지합니다. 앱의 `EMAIL_PROVIDER=DISABLED`는 업무 알림용 설정이며 Supabase Auth의 가입 확인 메일 설정과 별개입니다.
+
+플랫폼 설정을 변경한 뒤에는 다음과 같이 인증 컨테이너를 재생성하고 적용값을 확인합니다.
+
+```bash
+cd /home/dsadmin/platform/supabase
+docker compose --project-name digitalsquare-supabase --env-file .env --file docker-compose.yml --file docker-compose.ubuntu.yml up -d --no-deps --force-recreate --wait --wait-timeout 60 auth
+docker exec supabase-auth printenv GOTRUE_MAILER_AUTOCONFIRM
+```
+
+마지막 출력은 `true`여야 합니다. 새 가입은 세션을 발급받아 `/account-status`의 승인 대기 화면으로 이동합니다. DB의 신규 employee 상태는 계속 `REQUESTED`이며 관리자가 `/admin/requests`에서 승인해 `ACTIVE`로 바꾸기 전에는 업무 페이지/API/RPC 접근이 차단됩니다.
+
+`ENABLE_EMAIL_AUTOCONFIRM=false`로 이메일 확인을 사용하는 환경에는 실제 SMTP를 먼저 연결해야 합니다. 공식 기본 설정의 `SMTP_HOST=supabase-mail`에 해당하는 서버가 없으면 가입 시 `unexpected_failure`와 `lookup supabase-mail` 오류가 발생합니다. 기존 미확인 계정의 확인 상태는 자동 확인 설정 변경만으로 갱신되지 않으므로 계정별로 확인해야 합니다.
+
+가입 장애는 `supabase-auth`와 ERP의 `app`, `frontend` 로그를 함께 확인합니다. 앱은 가입 실패의 요청 ID와 안전한 Auth 오류 코드/HTTP 상태만 기록합니다. `unexpected_failure` 같은 인증 서버 장애는 HTTP 500, 발송/요청 제한은 429로 응답하며 입력값 오류와 구분합니다. 로그를 공유할 때 이메일과 토큰 등 개인정보·비밀값을 제거합니다.
+
 ## 출근 IP와 예약 작업
 
 Nginx만 3200 포트를 공개하고 앱 3000은 Docker 내부에 둡니다. Nginx가 요청마다 `X-DTS-Client-IP`를 실제 연결 IP로 덮어쓰며 앱은 `TRUSTED_CLIENT_IP_HEADER=x-dts-client-ip`일 때 이 헤더만 신뢰합니다. 앱 포트를 직접 노출하면 이 신뢰 조건이 깨집니다. Vercel 배포의 원래 IP 처리 방식은 유지합니다.
+
+인증 응답은 Supabase SSR의 세션 쿠키 여러 개를 포함할 수 있습니다. `deploy/nginx.conf`는 `proxy_buffer_size 16k`, `proxy_buffers 4 16k`, `proxy_busy_buffers_size 32k`를 설정합니다. 기본 헤더 버퍼를 초과하면 Auth 로그에서는 가입/로그인이 200이어도 Nginx는 `upstream sent too big header`와 502를 반환하고 화면에는 연결 오류가 표시될 수 있습니다. `proxy_buffering off`만으로는 응답 헤더 제한이 해제되지 않습니다. 설정 적용 시 `nginx -t`를 통과한 뒤 reload하고, 이미 생성된 계정으로 로그인해 승인 대기와 업무 접근 차단을 확인합니다.
 
 Vercel Cron을 대신하는 scheduler 컨테이너가 매시 월 정산, 평일 09:00 KST 운영 알림을 실행합니다. 메일 provider가 활성화되면 5분마다 outbox를 처리합니다. API는 Bearer `CRON_SECRET`/`EMAIL_DISPATCH_SECRET`을 검증합니다. 예약 작업은 기존 DB의 중복 실행 방지/재시도 동작을 사용합니다.
 

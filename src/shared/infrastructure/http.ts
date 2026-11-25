@@ -10,6 +10,7 @@ const messages = {
   ValidationError: "입력값을 확인해 주세요.",
   NotFound: "대상을 찾을 수 없습니다.",
   Conflict: "현재 상태와 충돌합니다. 새로고침 후 다시 시도해 주세요.",
+  TooManyRequests: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.",
   InternalError: "처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
 };
 

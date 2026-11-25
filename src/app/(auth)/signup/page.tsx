@@ -11,7 +11,7 @@ export default async function Signup({
     <>
       <PageHeading
         title="새 계정 요청"
-        description="이메일 확인과 관리자 승인 후 업무 시스템을 이용할 수 있습니다."
+        description="가입 요청 후 관리자 승인을 받으면 업무 시스템을 이용할 수 있습니다."
       />
       {params.submitted === "1" && (
         <p role="status" className="mb-4 text-sm text-primary">

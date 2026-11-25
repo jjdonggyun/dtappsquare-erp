@@ -5,6 +5,7 @@ export type ErrorCode =
   | "ValidationError"
   | "NotFound"
   | "Conflict"
+  | "TooManyRequests"
   | "InternalError";
 
 export type FieldValidationError = {
@@ -34,6 +35,7 @@ export const errorStatus: Record<ErrorCode, number> = {
   ValidationError: 400,
   NotFound: 404,
   Conflict: 409,
+  TooManyRequests: 429,
   InternalError: 500,
 };
 

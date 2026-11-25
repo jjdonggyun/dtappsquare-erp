@@ -31,6 +31,7 @@ if "$bootstrap"; then
 fi
 "${compose[@]}" up -d --no-build --wait --wait-timeout 180
 "${compose[@]}" up -d --no-build --no-deps --force-recreate --wait frontend
+"${compose[@]}" exec -T frontend nginx -t
 curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 3 http://127.0.0.1:3200/api/health >/dev/null
 curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 3 http://127.0.0.1:3200/login >/dev/null
 printf '%s\n' "${GITHUB_SHA:-manual}" > "$DEPLOY_ENV_FILE.deployed-sha"

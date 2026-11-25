@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   try {
     const input = formRequest ? await readFormMutation(request) : await readMutation(request);
     action = typeof input === "object" && input !== null ? Reflect.get(input, "action") : undefined;
-    const data = await authenticate(input);
+    const data = await authenticate(input, id);
     if (formRequest) {
       const destination =
         data.redirect ?? (action === "signup" ? "/signup?submitted=1" : "/login");
