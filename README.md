@@ -144,3 +144,7 @@ Supabase Security/Performance Advisor는 운영 프로젝트 연결 후 Dashboar
 ## Ubuntu 내부 서버
 
 새 Supabase DB와 초기 관리자만 생성하는 운영 배포는 [deploy/UBUNTU.md](deploy/UBUNTU.md)를 참고하세요. main 자동 배포, 전용 Nginx, 예약 작업 scheduler를 포함하며 개발 seed는 실행하지 않습니다.
+
+## 직원 Windows PC Agent
+
+[Agent 설치 EXE 다운로드](https://github.com/jjdonggyun/dtappsquare-erp/raw/refs/heads/main/public/downloads/DigitalSquare.DeviceAgent.Setup.exe)를 실행하고 장치 UUID와 원본 토큰을 입력하면 회사 인증서와 자동 실행을 설정합니다. ERP의 **내 근태 → PC Agent 설치(EXE)**에서도 받을 수 있습니다. 설치·빌드·검증 방법은 [Windows Agent 안내](tools/device-agent/windows/README.md)를 참고하세요.

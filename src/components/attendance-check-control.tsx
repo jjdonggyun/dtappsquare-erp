@@ -16,7 +16,11 @@ export function AttendanceCheckControl({eventType}:{eventType:"CHECK_IN"|"CHECK_
    const body=await response.json();if(!response.ok)throw new Error(apiErrorMessage(body,"검증을 시작하지 못했습니다.",response.status));
    const next=body.data as Verification;setVerification(next);
    if(next.status==="PENDING"&&(next.mode==="DEVICE_ONLY"||next.mode==="DEVICE_AND_NETWORK"||next.mode==="REMOTE_APPROVED"||next.network_status==="EXEMPT")){
-    const agent=await fetch("http://127.0.0.1:45873/proof",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({verification_id:next.id})});
+    if(!window.isSecureContext)throw new Error("기기 확인은 HTTPS ERP 주소로 접속한 뒤 다시 시도해 주세요.");
+    let agent:Response;
+    try{
+     agent=await fetch("http://127.0.0.1:45873/proof",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({verification_id:next.id})});
+    }catch{throw new Error("이 PC의 Agent에 연결할 수 없습니다. ‘PC Agent 설치(EXE)’로 설치한 뒤 브라우저의 로컬 네트워크 접근을 허용하고 다시 확인해 주세요.")}
     if(!agent.ok)throw new Error("등록된 회사 PC의 Device Agent를 확인해 주세요.");
     setVerification({...next,status:"READY",device_status:"VERIFIED"});
    }
@@ -33,12 +37,14 @@ export function AttendanceCheckControl({eventType}:{eventType:"CHECK_IN"|"CHECK_
  const ready=verification?.status==="READY";
  const network=verification?.network_status;
  const device=verification?.device_status;
+ const needsDevice=verification&&["DEVICE_ONLY","DEVICE_AND_NETWORK","REMOTE_APPROVED"].includes(verification.mode)&&device!=="VERIFIED";
  return <div className="min-w-52 space-y-2 text-xs text-white/85">
   <p className="font-semibold text-white">{loading?"출퇴근 환경 확인 중":ready?"출근 준비 완료":"현재 환경에서 일반 출퇴근을 기록할 수 없습니다"}</p>
   {verification&&<div className="space-y-1 text-[11px]"><p>등록 기기 · {device==="VERIFIED"?"확인":device==="NOT_REQUIRED"?"정책상 불필요":"확인 필요"}</p>
    <p>회사 네트워크 · {network==="VERIFIED"?"확인":network==="EXEMPT"?"승인 예외":network==="NOT_REQUIRED"?"정책상 불필요":"확인 필요"}</p></div>}
   <div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant="secondary" disabled={!ready||busy||loading} onClick={()=>void record()}>{eventType==="CHECK_IN"?"출근 기록":"퇴근 기록"}</Button>
    <Button type="button" size="sm" variant="outline" className="border-white/30 bg-transparent text-white" disabled={busy||loading} onClick={prepare}>다시 확인</Button></div>
+  {needsDevice&&<a href="/downloads/DigitalSquare.DeviceAgent.Setup.exe" download className="inline-block text-[11px] underline underline-offset-4">PC Agent 설치(EXE)</a>}
   {message&&<p role="status" className="whitespace-pre-line max-w-64 text-[11px] text-white/85">{message}</p>}
  </div>;
 }
