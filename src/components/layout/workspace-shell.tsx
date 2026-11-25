@@ -11,6 +11,7 @@ import {
   Receipt, ReceiptText, Settings2, ShieldCheck, Target, UserCheck, UserRound, Users,
 } from "lucide-react";
 import {
+  activeNavigation,
   navigationSections,
   visibleNavigation,
   type NavigationIcon,
@@ -70,6 +71,7 @@ export function WorkspaceShell({
   const pathname = usePathname();
   const router = useRouter();
   const visibleItems = visibleNavigation(permissions);
+  const activeSection = activeNavigation(pathname)?.section ?? "workspace";
 
   return (
     <div className="min-h-screen">
@@ -83,21 +85,17 @@ export function WorkspaceShell({
       )}
       <aside className={`fixed inset-y-0 left-0 z-40 flex w-[236px] flex-col border-r bg-white transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-[72px] shrink-0 items-center border-b px-6"><Brand compact /></div>
-        <div className="mx-4 mt-5 flex items-center gap-2.5 rounded-md border bg-[#fafbfd] px-3 py-3">
-          <span className="flex size-8 items-center justify-center rounded bg-brand-navy text-xs font-bold text-white">DS</span>
-          <div>
-            <p className="text-[12px] font-semibold">디지털스퀘어</p>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">통합 업무관리 시스템</p>
-          </div>
-        </div>
-        <nav aria-label="주 메뉴" className="flex-1 overflow-y-auto px-3 py-5">
+        <nav aria-label="주 메뉴" className="flex-1 overflow-y-auto px-3 py-3">
           {navigationSections.map((section) => {
             const items = visibleItems.filter((item) => item.section === section.id);
             if (items.length === 0) return null;
             return (
-              <div key={section.id} className="mb-6">
-                <p className="mb-2 px-3 text-[10px] font-semibold tracking-wide text-[#8b96a5]">{section.label}</p>
-                <div className="space-y-1">
+              <details key={section.id} open={section.id === activeSection} className="group mb-2">
+                <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between rounded-md px-3 text-[11px] font-semibold tracking-wide text-[#5b6778] transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                  {section.label}
+                  <ChevronRight size={14} aria-hidden="true" className="transition-transform group-open:rotate-90" />
+                </summary>
+                <div className="mt-1 space-y-1 pl-1">
                   {items.map((item) => {
                     const Icon = icons[item.icon];
                     const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -116,7 +114,7 @@ export function WorkspaceShell({
                     );
                   })}
                 </div>
-              </div>
+              </details>
             );
           })}
         </nav>
