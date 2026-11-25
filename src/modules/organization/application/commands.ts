@@ -21,7 +21,7 @@ export const organizationCommands = [
       .object({
         id: optionalId,
         catalog: z.enum(["positions", "titles"]),
-        code: z.string().regex(/^[A-Z][A-Z0-9_]{1,60}$/),
+        code: z.string().regex(/^[A-Z][A-Z0-9_]{0,60}$/),
         name: shortText,
         sort_order: z.number().int().min(0).max(1000000),
         active: z.boolean(),

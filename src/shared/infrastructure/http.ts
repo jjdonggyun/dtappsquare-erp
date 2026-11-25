@@ -16,6 +16,7 @@ const messages = {
 
 const fieldLabels: Record<string, string> = {
   action: "작업",
+  code: "코드",
   email: "이메일",
   password: "비밀번호",
   password_confirmation: "비밀번호 확인",

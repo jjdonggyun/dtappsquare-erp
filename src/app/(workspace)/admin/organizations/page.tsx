@@ -99,6 +99,10 @@ export default async function OrganizationAdmin() {
               <CardTitle>{catalog === "positions" ? "직급 · Position" : "직책 · Title"}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <p className="text-xs leading-5 text-muted-foreground">
+                코드는 영문 대문자로 시작하는 1~61자이며 숫자와 밑줄(_)을 사용할 수 있습니다.
+                예: M, STAFF, TEAM_LEAD
+              </p>
               {data[catalog].map((item) => (
                 <details key={item.id} className="rounded-lg border p-3">
                   <summary className="text-sm">
@@ -109,7 +113,7 @@ export default async function OrganizationAdmin() {
                       action="catalog.save"
                       constants={{ id: item.id, catalog }}
                       fields={[
-                        { name: "code", label: "코드", value: item.code, required: true },
+                        { name: "code", label: "코드 (1~61자)", value: item.code, required: true },
                         { name: "name", label: "이름", value: item.name, required: true },
                         {
                           name: "sort_order",
@@ -130,7 +134,7 @@ export default async function OrganizationAdmin() {
                     action="catalog.save"
                     constants={{ catalog, active: true, sort_order: 0 }}
                     fields={[
-                      { name: "code", label: "코드 (영문 대문자)", required: true },
+                      { name: "code", label: "코드 (1~61자)", required: true },
                       { name: "name", label: "이름", required: true },
                     ]}
                     submit="항목 추가"

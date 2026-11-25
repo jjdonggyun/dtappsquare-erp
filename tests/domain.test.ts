@@ -48,6 +48,29 @@ describe("domain authorization and contracts", () => {
         payload: { version: 1, user_status: "ACTIVE" },
       }).success,
     ).toBe(false));
+  it.each(["positions", "titles"] as const)("saves a single-letter %s code", async (catalog) => {
+    let saved: unknown;
+    const input = {
+      action: "catalog.save",
+      payload: { catalog, code: "M", name: "대리", sort_order: 0, active: true },
+    };
+    await executeCommand(
+      { ...account, permissions: ["ORGANIZATION_MANAGE"] },
+      input,
+      { execute: async (command) => { saved = command; } },
+      "single-letter-catalog",
+    );
+    expect(saved).toEqual(input);
+  });
+  it.each(["", "m", "1", "M-1", "M 사원", "대리", "M".repeat(62)])(
+    "rejects invalid catalog code %j",
+    (code) => {
+      expect(commandSchema.safeParse({
+        action: "catalog.save",
+        payload: { catalog: "positions", code, name: "대리", sort_order: 0, active: true },
+      }).success).toBe(false);
+    },
+  );
   it("requires an explicit rehire workflow", () =>
     expect(allowedTransitions("RESIGNED")).toEqual([]));
   it("does not reveal database internals", () =>
