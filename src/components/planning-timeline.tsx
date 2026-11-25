@@ -1,4 +1,5 @@
 "use client";
+import { apiErrorMessage } from "@/shared/browser/api-error";
 import {useState} from "react";
 import {useRouter} from "next/navigation";
 import {Button} from "@/components/ui/button";
@@ -20,10 +21,10 @@ export function PlanningTimeline({start,end,assignments,people,projects,leave=[]
     const begin=addDays(row.planned_start_date,mode==="end"?0:delta),finish=addDays(row.planned_end_date,mode==="start"?0:delta);
     if(begin>finish)return;
     const response=await fetch("/api/project-resource",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"project_assignment.save",payload:{...row,planned_start_date:begin,planned_end_date:finish,actual_start_date:row.actual_start_date??"",actual_end_date:row.actual_end_date??"",memo:row.memo??""}})});
-    const body=await response.json();setMessage(response.ok?(body.data?.message??"기간을 변경했습니다."):(body.error?.message??"변경하지 못했습니다."));if(response.ok)router.refresh();
+    const body=await response.json();setMessage(response.ok?(body.data?.message??"기간을 변경했습니다."):apiErrorMessage(body,"변경하지 못했습니다.",response.status));if(response.ok)router.refresh();
   }
   return <div><div className="mb-3 flex items-center gap-2 text-xs"><span className="text-muted-foreground">보기</span>{(["day","week","month"] as const).map(value=><Button key={value} size="sm" variant={zoom===value?"default":"outline"} onClick={()=>setZoom(value)}>{value==="day"?"일":value==="week"?"주":"월"}</Button>)}<span className="ml-auto text-muted-foreground">{start} ~ {end}</span></div>
-    {message&&<p role="status" className="mb-2 text-xs text-primary">{message}</p>}
+    {message&&<p role="status" className="whitespace-pre-line mb-2 text-xs text-primary">{message}</p>}
     <div className="overflow-x-auto rounded-md border"><div style={{minWidth:width+160}}>
       <div className="flex border-b bg-muted text-[11px]"><div className="sticky left-0 z-10 w-40 shrink-0 border-r bg-muted px-3 py-3 font-semibold">직원</div><div className="relative h-10 flex-1" style={{width}}>{ticks.map(t=><span key={t.date} className="absolute top-0 h-full border-l px-1 pt-2 text-muted-foreground" style={{left:`${t.left}%`}}>{zoom==="month"?t.date.slice(0,7):t.date.slice(5)}</span>)}</div></div>
       {rows.map(person=>{const items=assignments.filter(a=>a.user_id===person.id&&a.planned_start_date<=end&&a.planned_end_date>=start);const days=leave.filter(l=>l.user_id===person.id);return <div key={person.id} className="flex border-b last:border-b-0"><div className="sticky left-0 z-10 w-40 shrink-0 border-r bg-card px-3 py-3 text-xs font-semibold">{person.name}</div><div className="relative min-h-9 flex-1 bg-card" data-track style={{width,height:Math.max(38,(items.length+days.length)*30+8)}}>

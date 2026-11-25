@@ -8,8 +8,9 @@ const messages = {
   EmailNotConfirmed: "이메일 확인이 필요합니다. 확인 메일을 열거나 관리자에게 로그인 초기화를 요청해 주세요.",
   Forbidden: "이 작업을 수행할 권한이 없습니다.",
   ValidationError: "입력값을 확인해 주세요.",
-  NotFound: "대상을 찾을 수 없습니다.",
+  NotFound: "요청한 항목을 찾을 수 없습니다. 목록을 새로고침한 뒤 다시 선택해 주세요.",
   Conflict: "현재 상태와 충돌합니다. 새로고침 후 다시 시도해 주세요.",
+  SetupRequired: "이 작업에 필요한 설정이 완료되지 않았습니다. 관리자에게 설정을 요청해 주세요.",
   TooManyRequests: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.",
   InternalError: "처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
 };
@@ -21,6 +22,17 @@ const fieldLabels: Record<string, string> = {
   password: "비밀번호",
   password_confirmation: "비밀번호 확인",
   name: "이름",
+  user_id: "직원",
+  work_policy_id: "근무정책",
+  effective_from: "적용 시작일",
+  effective_to: "적용 종료일",
+  leave_type: "휴가 유형",
+  start_date: "시작일",
+  end_date: "종료일",
+  reason: "사유",
+  working_days: "근무 요일",
+  check_in_time: "출근 기준 시각",
+  check_out_time: "퇴근 기준 시각",
   id: "대상",
   version: "데이터 버전",
   business_registration_number: "사업자등록번호",
@@ -54,6 +66,7 @@ function issueField(issue: ZodIssue) {
 }
 
 function issueMessage(issue: ZodIssue, label: string) {
+  if (issue.code === "custom" && issue.message !== "Invalid input") return issue.message;
   if (issue.code === "invalid_type") return `${label}의 값 또는 형식을 확인해 주세요.`;
   if (issue.code === "too_small") return `${label}이(가) 비어 있거나 허용된 최소값보다 작습니다.`;
   if (issue.code === "too_big") return `${label}이(가) 허용된 최대값을 초과했습니다.`;

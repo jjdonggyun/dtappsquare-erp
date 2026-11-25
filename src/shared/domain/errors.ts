@@ -1,3 +1,5 @@
+import { databaseErrorGuidance } from "./database-error-guidance";
+
 export type ErrorCode =
   | "Unauthorized"
   | "EmailNotConfirmed"
@@ -5,6 +7,7 @@ export type ErrorCode =
   | "ValidationError"
   | "NotFound"
   | "Conflict"
+  | "SetupRequired"
   | "TooManyRequests"
   | "InternalError";
 
@@ -35,6 +38,7 @@ export const errorStatus: Record<ErrorCode, number> = {
   ValidationError: 400,
   NotFound: 404,
   Conflict: 409,
+  SetupRequired: 409,
   TooManyRequests: 429,
   InternalError: 500,
 };
@@ -63,6 +67,8 @@ export function databaseError(error: {
   hint?: string | null;
 }): AppError {
   const code = error.code ?? "";
+  const guidance = databaseErrorGuidance(code, error.message ?? "");
+  if (guidance) return new AppError(guidance.code, guidance.message, { hint: guidance.hint });
   if (code === "28000") return new AppError("Unauthorized");
   if (code === "42501") return new AppError("Forbidden");
   if (code === "P0002") return new AppError("NotFound");

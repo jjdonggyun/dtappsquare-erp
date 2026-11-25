@@ -1,4 +1,5 @@
 "use client";
+import { apiErrorMessage } from "@/shared/browser/api-error";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -48,7 +49,7 @@ export function ExpenseLedger({ expenses, types, vendors, projects, cards, assig
         body: JSON.stringify({ action, payload }),
       });
       const body = await response.json();
-      if (!response.ok) throw new Error(`${body.error?.message ?? "처리하지 못했습니다."} (${body.error?.requestId ?? response.status})`);
+      if (!response.ok) throw new Error(apiErrorMessage(body, "처리하지 못했습니다.", response.status));
       setMessage(body.data?.message ?? "처리했습니다."); setEditing(null); router.refresh();
     } catch (error) { setMessage(error instanceof Error ? error.message : "연결을 확인해 주세요."); }
     finally { setBusy(false); }
@@ -60,7 +61,7 @@ export function ExpenseLedger({ expenses, types, vendors, projects, cards, assig
       const form = new FormData(); form.set("expense_id", expense.id); form.set("version", String(expense.version)); form.set("file", file);
       const response = await fetch("/api/corporate-card/receipt", { method: "POST", body: form });
       const body = await response.json();
-      if (!response.ok) throw new Error(body.error?.message ?? "증빙을 저장하지 못했습니다.");
+      if (!response.ok) throw new Error(apiErrorMessage(body, "증빙을 저장하지 못했습니다.", response.status));
       setMessage("증빙을 저장했습니다."); router.refresh();
     } catch (error) { setMessage(error instanceof Error ? error.message : "연결을 확인해 주세요."); }
     finally { setBusy(false); }
@@ -106,6 +107,6 @@ export function ExpenseLedger({ expenses, types, vendors, projects, cards, assig
         <div className="flex gap-2 sm:col-span-2"><Button type="submit" disabled={busy || !projectId}>{busy ? "처리 중…" : "비용 저장"}</Button>{editing ? <Button type="button" variant="ghost" onClick={() => { setEditing(null); setSource("TRANSFER"); }}>새 비용 입력</Button> : null}</div>
       </form>
     </CardContent></Card> : null}
-    {message ? <p role="status" className="rounded-md border bg-card p-3 text-sm">{message}</p> : null}
+    {message ? <p role="status" className="whitespace-pre-line rounded-md border bg-card p-3 text-sm">{message}</p> : null}
   </div>;
 }

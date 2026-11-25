@@ -1,4 +1,5 @@
 "use client";
+import { apiErrorMessage } from "@/shared/browser/api-error";
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -43,7 +44,7 @@ export function ProjectDocumentUpload({
           const result = await response.json();
           if (!response.ok)
             throw new Error(
-              `${result.error?.message ?? "업로드하지 못했습니다."} (${result.error?.requestId ?? response.status})`,
+              apiErrorMessage(result, "업로드하지 못했습니다.", response.status),
             );
           requestId.current = null;
           setFailed(false);
@@ -100,7 +101,7 @@ export function ProjectDocumentUpload({
       <p className="text-xs text-muted-foreground">PDF, DOCX, XLSX, JPEG, PNG, WebP · 최대 50MB</p>
       {message ? (
         <Alert variant={failed ? "destructive" : "default"}>
-          <AlertDescription>{message}</AlertDescription>
+          <AlertDescription className="whitespace-pre-line">{message}</AlertDescription>
         </Alert>
       ) : null}
       <Button disabled={busy} type="submit">

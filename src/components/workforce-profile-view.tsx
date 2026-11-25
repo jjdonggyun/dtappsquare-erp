@@ -1,4 +1,5 @@
 "use client";
+import { apiErrorMessage } from "@/shared/browser/api-error";
 import { useState } from "react";
 import Link from "next/link";
 import { CommandForm, type Field } from "@/components/command-form";
@@ -67,7 +68,7 @@ export function WorkforceProfileView({
       });
       if (!response.ok) {
         const body = await response.json();
-        throw new Error(body.error?.message ?? "생성하지 못했습니다.");
+        throw new Error(apiErrorMessage(body, "생성하지 못했습니다.", response.status));
       }
       const blob = await response.blob(),
         url = URL.createObjectURL(blob),
@@ -132,7 +133,7 @@ export function WorkforceProfileView({
                 인력프로필 Excel
               </Button>
               {exportError && (
-                <span className="text-xs text-destructive" role="alert">
+                <span className="whitespace-pre-line text-xs text-destructive" role="alert">
                   {exportError}
                 </span>
               )}
